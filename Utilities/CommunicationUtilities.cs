@@ -54,6 +54,7 @@ namespace MRO_Api.Utilities
                 // Create a new MimeMessage
                 var mimeMessage = new MimeMessage();
                 mimeMessage.From.Add(MailboxAddress.Parse(emailDtoModel.from_email));
+                mimeMessage.To.Add(MailboxAddress.Parse(emailDtoModel.to_email));
 
                 // Add CC recipients
                 if (!string.IsNullOrEmpty(emailDtoModel.t16_email_cc))
@@ -73,6 +74,7 @@ namespace MRO_Api.Utilities
                     }
                 }
 
+               
                 mimeMessage.Subject = emailDtoModel.t16_email_subject;
                 mimeMessage.Body = new TextPart(TextFormat.Html) { Text = emailBody.ToString() };
                
@@ -89,7 +91,7 @@ namespace MRO_Api.Utilities
             {
                 // Log the exception or handle it as needed
                 Console.WriteLine($"Error sending email: {ex.Message}");
-                return false; // Failure
+                return false ; // Failure
             }
         }
 

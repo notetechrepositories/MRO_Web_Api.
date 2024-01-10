@@ -54,26 +54,32 @@ namespace MRO_Api.Repositories
 
 
 
-                    /*var getMenuJson = result.First().getMenu;
+                    var data = result.FirstOrDefault().data;
+                    var dataDeserialize = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(data);
 
 
-                    var getMenuList = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(getMenuJson);
+                    /*   var getMenuJson = result.First().data;
 
-                    // Iterate through each dictionary in the 'getMenu' list
-                    foreach (var menuDict in getMenuList)
-                    {
-                        if (menuDict.ContainsKey("t15_file_path"))
-                        {
 
-                            var t15FilePathValue = menuDict["t15_file_path"];
-                        }
-                    }*/
+                       var getMenuList = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(getMenuJson);
+
+                       // Iterate through each dictionary in the 'getMenu' list
+                       foreach (var menuDict in getMenuList)
+                       {
+                           if (menuDict.ContainsKey("t15_file_path"))
+                           {
+
+                               var t15FilePathValue = menuDict["t15_file_path"];
+                           }
+                       }*/
+
+
 
 
 
                     return new ApiResponseModel<dynamic>
                     {
-                        Data = result,
+                        Data = dataDeserialize,
                         Message = "Successfully retrieved data",
                         Status = 200
                     };
