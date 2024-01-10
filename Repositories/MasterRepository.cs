@@ -35,7 +35,8 @@ namespace MRO_Api.Repositories
 
 
 
-        public async Task<ApiResponseModel<dynamic>> commonGet(CommonModel commonModel)
+
+        /*public async Task<ApiResponseModel<dynamic>> commonGet(CommonModel commonModel)
         {
             try
             {
@@ -80,9 +81,13 @@ namespace MRO_Api.Repositories
                     Status = 400
                 };
             }
-        }
+        }*/
 
-        public class ResultDataObject
+
+
+
+
+     /*   public class ResultDataObject
         {
             [JsonProperty("ResultData")]
             public List<Dictionary<string, object>> ResultData { get; set; }
@@ -92,7 +97,59 @@ namespace MRO_Api.Repositories
 
             [JsonProperty("message")]
             public string Message { get; set; }
+        }*/
+
+
+
+
+
+
+        public async Task<ApiResponseModel<dynamic>> commonGet(CommonModel commonModel)
+        {
+            try
+            {
+                using (var connection = _context.CreateConnection())
+                {
+                    // Serialize the request object to JSON
+                    var jsonData = JsonConvert.SerializeObject(commonModel);
+
+                    // Call the stored procedure
+                    var result = await connection.QueryAsync(
+                        "api_crud_sp", // Stored procedure name
+                        new { jsonData },
+                        commandType: CommandType.StoredProcedure
+                    );
+
+                    var resultDataJson = result.FirstOrDefault()?.data;
+                    var resultDataList = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(resultDataJson);
+
+                    // Access the message directly from the result variable
+                    var message = result.FirstOrDefault()?.message;
+
+                    var status = result.FirstOrDefault()?.status;
+
+                    return new ApiResponseModel<dynamic>
+                    {
+                        Data = resultDataList,
+                        Message = message,
+                        Status = status
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponseModel<dynamic>
+                {
+                    Data = 0,
+                    Message = ex.Message,
+                    Status = 400
+                };
+            }
         }
+
+
+
+
 
 
 
@@ -110,6 +167,8 @@ namespace MRO_Api.Repositories
                    var t15FilePathValue = menuDict["t15_file_path"];
                }
            }*/
+
+
 
 
         public async Task<ApiResponseModel<dynamic>> commonApiForEmail(CommonModel commonModel)
@@ -238,6 +297,10 @@ namespace MRO_Api.Repositories
                 return ex.Message;
             }
         }
+
+
+
+
 
 
 
