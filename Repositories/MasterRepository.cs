@@ -44,7 +44,6 @@ namespace MRO_Api.Repositories
                     // Serialize the request object to JSON
                     var jsonData = JsonConvert.SerializeObject(commonModel);
 
-
                     // Call the stored procedure
                     var result = await connection.QueryAsync(
                         "api_crud_sp", // Stored procedure name
@@ -52,36 +51,23 @@ namespace MRO_Api.Repositories
                         commandType: CommandType.StoredProcedure
                     );
 
+                    var resultDataJson = result.FirstOrDefault()?.data;
+                    var resultDataObject = JsonConvert.DeserializeObject<ResultDataObject>(resultDataJson);
 
+                    // Access the message directly from the result variable
+                    var message = result.FirstOrDefault()?.message;
 
-                    var data = result.FirstOrDefault().data;
-                    var dataDeserialize = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(data);
+                    var status = result.FirstOrDefault()?.status;
 
-
-                    /*   var getMenuJson = result.First().data;
-
-
-                       var getMenuList = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(getMenuJson);
-
-                       // Iterate through each dictionary in the 'getMenu' list
-                       foreach (var menuDict in getMenuList)
-                       {
-                           if (menuDict.ContainsKey("t15_file_path"))
-                           {
-
-                               var t15FilePathValue = menuDict["t15_file_path"];
-                           }
-                       }*/
-
-
+                    var dataDeserialize = resultDataObject?.ResultData;
 
 
 
                     return new ApiResponseModel<dynamic>
                     {
                         Data = dataDeserialize,
-                        Message = "Successfully retrieved data",
-                        Status = 200
+                        Message = message,
+                        Status = status
                     };
                 }
             }
@@ -96,6 +82,34 @@ namespace MRO_Api.Repositories
             }
         }
 
+        public class ResultDataObject
+        {
+            [JsonProperty("ResultData")]
+            public List<Dictionary<string, object>> ResultData { get; set; }
+
+            [JsonProperty("status")]
+            public string Status { get; set; }
+
+            [JsonProperty("message")]
+            public string Message { get; set; }
+        }
+
+
+
+        /*   var getMenuJson = result.First().data;
+
+
+           var getMenuList = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(getMenuJson);
+
+           // Iterate through each dictionary in the 'getMenu' list
+           foreach (var menuDict in getMenuList)
+           {
+               if (menuDict.ContainsKey("t15_file_path"))
+               {
+
+                   var t15FilePathValue = menuDict["t15_file_path"];
+               }
+           }*/
 
 
         public async Task<ApiResponseModel<dynamic>> commonApiForEmail(CommonModel commonModel)
