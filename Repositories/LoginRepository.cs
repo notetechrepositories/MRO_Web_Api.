@@ -36,7 +36,7 @@ namespace MRO_Api.Repositories
                     var Serialize_jsonData = JsonConvert.SerializeObject(jsonData);
 
                     var result = await connection.QueryFirstOrDefaultAsync<dynamic>(
-                         "validation_pin",
+                         "get_validation_pin_sp",
                          new { jsonData = Serialize_jsonData },
                          commandType: CommandType.StoredProcedure
                      );

@@ -49,11 +49,11 @@ namespace MRO_Api.Utilities
                 // Build email body
                 StringBuilder emailBody = new("<html><body>");
                 emailBody.Append(emailDtoModel.t16_email_html_body);
+                emailBody.Append(emailDtoModel.signature_content);
 
                 // Create a new MimeMessage
                 var mimeMessage = new MimeMessage();
                 mimeMessage.From.Add(MailboxAddress.Parse(emailDtoModel.from_email));
-                mimeMessage.To.Add(MailboxAddress.Parse(emailDtoModel.to_email));
 
                 // Add CC recipients
                 if (!string.IsNullOrEmpty(emailDtoModel.t16_email_cc))
@@ -75,6 +75,7 @@ namespace MRO_Api.Utilities
 
                 mimeMessage.Subject = emailDtoModel.t16_email_subject;
                 mimeMessage.Body = new TextPart(TextFormat.Html) { Text = emailBody.ToString() };
+               
 
                 using var smtp = new MailKit.Net.Smtp.SmtpClient();
                 smtp.Connect("smtp.gmail.com", 587, SecureSocketOptions.StartTls);

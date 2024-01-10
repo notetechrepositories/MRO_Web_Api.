@@ -9,5 +9,6 @@
         public string t16_email_cc { get; set; }
         public string from_email { get; set; }
         public string from_email_password { get; set; }       
+        public string signature_content { get; set; }   
     }
 }

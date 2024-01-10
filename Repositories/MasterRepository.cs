@@ -101,6 +101,7 @@ namespace MRO_Api.Repositories
                     emailDTOModel.from_email_password = row["from_email_password"]?.ToString();
                     emailDTOModel.from_email = row["from_email"]?.ToString();
                     emailDTOModel.to_email = row["to_email"]?.ToString();
+                    emailDTOModel.signature_content = row["signature_content"]?.ToString();
 
                     _communicationUtilities.SendMail(emailDTOModel);
                     
@@ -116,7 +117,6 @@ namespace MRO_Api.Repositories
 
                     // Encrypt the otpTimeDictionary
                     string encryptedData = Encryption.encrypt(JsonConvert.SerializeObject(otpTimeDictionary));
-
 
                    return new ApiResponseModel<dynamic>
                     {
