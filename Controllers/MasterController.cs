@@ -39,9 +39,9 @@ namespace MRO_Api.Controllers
 
 
         [HttpPost("otpVerification")]
-        public async Task<IActionResult> otpVerification(string ecryptedOtp, string otp)
+        public async Task<IActionResult>  otpVerification(Dictionary<string, string> data)
         {
-            var result = await _masterRepository.otpVerification(ecryptedOtp, otp);
+            var result = await _masterRepository.otpVerification(data);
             return Ok(result);
         }
 

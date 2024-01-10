@@ -42,7 +42,7 @@ namespace MRO_Api.Utilities
              }
          }
  */
-        public async Task<int> SendMail(EmailDtoModel emailDtoModel)
+        public async Task<bool> SendMail(EmailDtoModel emailDtoModel)
         {
             try
             {
@@ -83,13 +83,13 @@ namespace MRO_Api.Utilities
                 smtp.Send(mimeMessage);
                 smtp.Disconnect(true);
 
-                return 1; // Success
+                return true; // Success
             }
             catch (Exception ex)
             {
                 // Log the exception or handle it as needed
                 Console.WriteLine($"Error sending email: {ex.Message}");
-                return 0; // Failure
+                return false; // Failure
             }
         }
 

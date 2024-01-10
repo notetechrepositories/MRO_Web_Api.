@@ -9,7 +9,6 @@ namespace MRO_Api.IRepository
         public Task<ApiResponseModel<dynamic>> commonGet(CommonModel commonModel);
 
         public Task<ApiResponseModel<dynamic>> commonApiForEmail(CommonModel commonModel);
-        public  Task<String> otpVerification(string ecryptedOtp, string otp);
-
+        public Task<string> otpVerification(Dictionary<string, string> data);
     }
 }

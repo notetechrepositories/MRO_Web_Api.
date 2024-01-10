@@ -34,10 +34,9 @@ namespace MRO_Api.Repositories
         }
 
 
- 
+
         public async Task<ApiResponseModel<dynamic>> commonGet(CommonModel commonModel)
         {
-            
             try
             {
                 using (var connection = _context.CreateConnection())
@@ -45,15 +44,36 @@ namespace MRO_Api.Repositories
                     // Serialize the request object to JSON
                     var jsonData = JsonConvert.SerializeObject(commonModel);
 
+
                     // Call the stored procedure
-                    var result = await connection.QueryAsync<dynamic>(
+                    var result = await connection.QueryAsync(
                         "api_crud_sp", // Stored procedure name
                         new { jsonData },
                         commandType: CommandType.StoredProcedure
                     );
+
+
+
+                    /*var getMenuJson = result.First().getMenu;
+
+
+                    var getMenuList = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(getMenuJson);
+
+                    // Iterate through each dictionary in the 'getMenu' list
+                    foreach (var menuDict in getMenuList)
+                    {
+                        if (menuDict.ContainsKey("t15_file_path"))
+                        {
+
+                            var t15FilePathValue = menuDict["t15_file_path"];
+                        }
+                    }*/
+
+
+
                     return new ApiResponseModel<dynamic>
                     {
-                        Data =result,
+                        Data = result,
                         Message = "Successfully retrieved data",
                         Status = 200
                     };
@@ -69,8 +89,6 @@ namespace MRO_Api.Repositories
                 };
             }
         }
-
-
 
 
 
@@ -103,28 +121,37 @@ namespace MRO_Api.Repositories
                     emailDTOModel.to_email = row["to_email"]?.ToString();
                     emailDTOModel.signature_content = row["signature_content"]?.ToString();
 
-                    _communicationUtilities.SendMail(emailDTOModel);
+                    var emailStatus = await _communicationUtilities.SendMail(emailDTOModel);
                     
-
-                    var currentTime = DateTime.Now.ToString();
-                    var otp = row["otp"]?.ToString();
-
-                    var otpTimeDictionary = new Dictionary<string, string>
+                    if (emailStatus)
                     {
-                        ["otp"] = otp,
-                        ["time"] = currentTime
-                    };
+                        var currentTime = DateTime.Now.ToString();
+                        var otp = row["otp"]?.ToString();
 
-                    // Encrypt the otpTimeDictionary
-                    string encryptedData = Encryption.encrypt(JsonConvert.SerializeObject(otpTimeDictionary));
+                        var otpTimeDictionary = new Dictionary<string, string>
+                        {
+                            ["otp"] = otp,
+                            ["time"] = currentTime
+                        };
 
-                   return new ApiResponseModel<dynamic>
+                        // Encrypt the otpTimeDictionary
+                        string encryptedData = Encryption.encrypt(JsonConvert.SerializeObject(otpTimeDictionary));
+
+                        
+
+                        return new ApiResponseModel<dynamic>
+                        {
+                            Data = new Dictionary<string, string>() { {"encryptedData", encryptedData } ,{ "time" , currentTime } },
+                            Message = "Successfully retrieved data",
+                            Status = 200
+                        };
+                    }
+                    return new ApiResponseModel<dynamic>
                     {
-                        Data = encryptedData,
-                        Message = "Successfully retrieved data",
-                        Status = 200
+                        Data = null,
+                        Message = "Email not sent",
+                        Status = 400
                     };
-                    
                 }
             }
             catch (Exception ex)
@@ -139,15 +166,17 @@ namespace MRO_Api.Repositories
         }
 
 
+
+
        
-        public async Task<string> otpVerification(string encryptedData, string otp)
+        public async Task<string> otpVerification(Dictionary<string,string> data)
         {
             try
             {
                 string status = "";
 
                 // Decrypt the encrypted data
-                var otpAndTimeDecrypted = Decryption.Decrypt(encryptedData);
+                var otpAndTimeDecrypted = Decryption.Decrypt(data["encryptedData"]);
 
                 // Log or print the decrypted data for debugging
                  status="Decrypted Data: " + otpAndTimeDecrypted;
@@ -169,7 +198,7 @@ namespace MRO_Api.Repositories
                 // Check if the OTP matches and is within the 60-second window
                 if (timeDifference.TotalSeconds < 60)
                 {
-                    if (storedOTP == otp.Trim())
+                    if (storedOTP == data["otp"].Trim())
                     {
                         status = "Valid OTP";
                     }
