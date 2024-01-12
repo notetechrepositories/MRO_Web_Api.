@@ -9,7 +9,9 @@ using MRO_Api.Model;
 using MRO_Api.Utilities;
 using MySqlX.XDevAPI.Common;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Org.BouncyCastle.Asn1.Ocsp;
+using System.Collections.Generic;
 using System.Data;
 using System.Net.WebSockets;
 using System.Text;
@@ -87,17 +89,17 @@ namespace MRO_Api.Repositories
 
 
 
-     /*   public class ResultDataObject
-        {
-            [JsonProperty("ResultData")]
-            public List<Dictionary<string, object>> ResultData { get; set; }
+        /*   public class ResultDataObject
+           {
+               [JsonProperty("ResultData")]
+               public List<Dictionary<string, object>> ResultData { get; set; }
 
-            [JsonProperty("status")]
-            public string Status { get; set; }
+               [JsonProperty("status")]
+               public string Status { get; set; }
 
-            [JsonProperty("message")]
-            public string Message { get; set; }
-        }*/
+               [JsonProperty("message")]
+               public string Message { get; set; }
+           }*/
 
 
 
@@ -108,47 +110,80 @@ namespace MRO_Api.Repositories
         {
             try
             {
+                dynamic finalResult = new List<Dictionary<string, object>>();
                 using (var connection = _context.CreateConnection())
                 {
-                    // Serialize the request object to JSON
                     var jsonData = JsonConvert.SerializeObject(commonModel);
 
-                    // Call the stored procedure
                     var result = await connection.QueryAsync(
-                        "api_crud_sp", // Stored procedure name
+                        "api_crud_sp",
                         new { jsonData },
                         commandType: CommandType.StoredProcedure
                     );
 
-                    var resultDataJson = result.FirstOrDefault()?.data;
-                    var resultDataList = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(resultDataJson);
-
-                    // Access the message directly from the result variable
-                    var message = result.FirstOrDefault()?.message;
-
-                    var status = result.FirstOrDefault()?.status;
-
-                    return new ApiResponseModel<dynamic>
+                    var firstResult = result.FirstOrDefault();
+                    if (firstResult != null)
                     {
-                        Data = resultDataList,
-                        Message = message,
-                        Status = status
-                    };
+                        var testData = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(firstResult.data);
+
+                        foreach (var item in testData)
+                        {
+                            var accumulatedPairs = new Dictionary<string, object>();
+                            foreach (var keyValuePair in item)
+                            {
+                                if (keyValuePair.Value is JArray)
+                                {
+                                 
+                                    var jsonArray = keyValuePair.Value.ToObject<List<Dictionary<string, object>>>();
+
+                                    
+                                    accumulatedPairs[keyValuePair.Key] = jsonArray;
+                                }
+                                else if (keyValuePair.Value is string)
+                                {
+                                   
+                                    accumulatedPairs[keyValuePair.Key] = keyValuePair.Value.ToString();
+                                }
+                                else
+                                {
+                                   
+                                    accumulatedPairs[keyValuePair.Key] = keyValuePair.Value;
+                                }
+                            }
+                            finalResult.Add(accumulatedPairs);
+                        }
+
+                        var message = firstResult.message;
+                        var status = firstResult.status;
+
+                        return new ApiResponseModel<dynamic>
+                        {
+                            Data = finalResult,
+                            Message = message,
+                            Status = 200
+                        };
+                    }
+                    else
+                    {
+                        return new ApiResponseModel<dynamic>
+                        {
+                            Data = null,
+                            Message = "No data returned",
+                            Status = 204 // No Content
+                        };
+                    }
                 }
             }
             catch (Exception ex)
             {
                 return new ApiResponseModel<dynamic>
                 {
-                    Data = 0,
+                    Data = null,
                     Message = ex.Message,
                     Status = 400
                 };
             }
         }
-
-
-
 
 
 
