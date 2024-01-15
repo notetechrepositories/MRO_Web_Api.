@@ -5,7 +5,7 @@
        
             public T Data { get; set; }
             public object Message { get; set; }
-            public long Status { get; set; }
+            public int Status { get; set; }
         
     }
 }

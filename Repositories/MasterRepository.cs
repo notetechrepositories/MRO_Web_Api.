@@ -13,6 +13,7 @@ using Newtonsoft.Json.Linq;
 using Org.BouncyCastle.Asn1.Ocsp;
 using System.Collections.Generic;
 using System.Data;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json.Nodes;
@@ -132,18 +133,14 @@ namespace MRO_Api.Repositories
                             foreach (var keyValuePair in item)
                             {
                                 if (keyValuePair.Value is JArray)
-                                {
-                                 
-                                    var jsonArray = keyValuePair.Value.ToObject<List<Dictionary<string, object>>>();
-
-                                    
+                                {                                
+                                    var jsonArray = keyValuePair.Value.ToObject<List<Dictionary<string, object>>>();                                 
                                     accumulatedPairs[keyValuePair.Key] = jsonArray;
                                 }
                                 else if (keyValuePair.Value is string)
-                                {
-                                   
+                                {                                
                                     accumulatedPairs[keyValuePair.Key] = keyValuePair.Value.ToString();
-                                }
+                                }                              
                                 else
                                 {
                                    
@@ -160,14 +157,16 @@ namespace MRO_Api.Repositories
                         {
                             Data = finalResult,
                             Message = message,
-                            Status = 200
+                            Status = Convert.ToInt32(status)
                         };
                     }
                     else
                     {
+                       
                         return new ApiResponseModel<dynamic>
-                        {
-                            Data = null,
+                        {                       
+
+                           Data = null,
                             Message = "No data returned",
                             Status = 204 // No Content
                         };
@@ -176,14 +175,19 @@ namespace MRO_Api.Repositories
             }
             catch (Exception ex)
             {
+               
+                var errorDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(ex.Message);
+ 
                 return new ApiResponseModel<dynamic>
                 {
                     Data = null,
-                    Message = ex.Message,
-                    Status = 400
+                    Message = errorDict["Message"],
+                    Status = Convert.ToInt32(errorDict["Status"]) 
                 };
             }
         }
+
+
 
 
 
@@ -251,8 +255,8 @@ namespace MRO_Api.Repositories
                         // Encrypt the otpTimeDictionary
                         string encryptedData = Encryption.encrypt(JsonConvert.SerializeObject(otpTimeDictionary));
 
+                       
                         
-
                         return new ApiResponseModel<dynamic>
                         {
                             Data = new Dictionary<string, string>() { {"encryptedData", encryptedData } ,{ "time" , currentTime } },
