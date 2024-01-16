@@ -17,6 +17,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json.Nodes;
+using static MRO_Api.Model.CommonModel;
 using static System.Net.WebRequestMethods;
 
 
@@ -25,14 +26,13 @@ namespace MRO_Api.Repositories
     public class MasterRepository : IMasterRepository
     {
         private readonly DapperContext _context;
-        private readonly IEmailRepository _emailRepository;
+     
         private readonly CommunicationUtilities _communicationUtilities;
        
-        public MasterRepository(DapperContext context,IEmailRepository emailRepository, CommunicationUtilities communicationUtilities)
+        public MasterRepository(DapperContext context, CommunicationUtilities communicationUtilities)
 
         {
-            _context = context;
-            _emailRepository = emailRepository;
+            _context = context;          
             _communicationUtilities = communicationUtilities;
         }
 
@@ -107,14 +107,14 @@ namespace MRO_Api.Repositories
 
 
 
-        public async Task<ApiResponseModel<dynamic>> commonGet(CommonModel commonModel)
+        public async Task<ApiResponseModel<dynamic>> commonGet(CreateModel createModel)
         {
             try
             {
                 dynamic finalResult = new List<Dictionary<string, object>>();
                 using (var connection = _context.CreateConnection())
                 {
-                    var jsonData = JsonConvert.SerializeObject(commonModel);
+                    var jsonData = JsonConvert.SerializeObject(createModel);
 
                     var result = await connection.QueryAsync(
                         "api_crud_sp",
@@ -161,8 +161,7 @@ namespace MRO_Api.Repositories
                         };
                     }
                     else
-                    {
-                       
+                    {                      
                         return new ApiResponseModel<dynamic>
                         {                       
 
@@ -175,7 +174,7 @@ namespace MRO_Api.Repositories
             }
             catch (Exception ex)
             {
-               
+                var t = ex.Message;
                 var errorDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(ex.Message);
  
                 return new ApiResponseModel<dynamic>
@@ -186,6 +185,90 @@ namespace MRO_Api.Repositories
                 };
             }
         }
+
+
+
+
+
+
+
+        public async Task<ApiResponseModel<dynamic>> commonDelete(DeleteModel deleteModel)
+        {
+            try
+            {
+                dynamic finalResult = new List<Dictionary<string, object>>();
+                using (var connection = _context.CreateConnection())
+                {
+                    var jsonData = JsonConvert.SerializeObject(deleteModel);
+
+                    var result = await connection.QueryAsync(
+                        "api_crud_sp",
+                        new { jsonData },
+                        commandType: CommandType.StoredProcedure
+                    );
+
+                    var firstResult = result.FirstOrDefault();
+                    if (firstResult != null)
+                    {
+
+                        var testData = firstResult.data;
+                        var message = firstResult.message;
+                        var status = firstResult.status;
+
+                        return new ApiResponseModel<dynamic>
+                        {
+                            Data = finalResult,
+                            Message = message,
+                            Status = Convert.ToInt32(status)
+                        };
+                    }
+                    else
+                    {
+
+                        return new ApiResponseModel<dynamic>
+                        {
+
+                            Data = null,
+                            Message = "No data returned",
+                            Status = 204 // No Content
+                        };
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+
+                var errorDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(ex.Message);
+
+                return new ApiResponseModel<dynamic>
+                {
+                    Data = null,
+                    Message = errorDict["Message"],
+                    Status = Convert.ToInt32(errorDict["Status"])
+                };
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -210,14 +293,14 @@ namespace MRO_Api.Repositories
 
 
 
-        public async Task<ApiResponseModel<dynamic>> commonApiForEmail(CommonModel commonModel)
+        public async Task<ApiResponseModel<dynamic>> commonApiForEmail(CreateModel createModel)
         {
             try
             {
                 using (var connection = _context.CreateConnection())
                 {
                     // Serialize the request object to JSON
-                    var jsonData = JsonConvert.SerializeObject(commonModel);
+                    var jsonData = JsonConvert.SerializeObject(createModel);
 
                     // Call the stored procedure
                     var result = await connection.QueryAsync(

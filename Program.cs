@@ -23,7 +23,8 @@ builder.Services.AddSingleton<CommunicationUtilities>();
 
 builder.Services.AddScoped<IMasterRepository, MasterRepository>();
 builder.Services.AddScoped<ILoginRepository, LoginRepository>();
-builder.Services.AddScoped<IEmailRepository, EmailRepository>();
+
+
 
 
 

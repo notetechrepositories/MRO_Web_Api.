@@ -6,6 +6,7 @@ using MRO_Api.IRepository;
 using MRO_Api.Model;
 using Newtonsoft.Json;
 using System.Text.Json.Nodes;
+using static MRO_Api.Model.CommonModel;
 
 namespace MRO_Api.Controllers
 {
@@ -22,18 +23,27 @@ namespace MRO_Api.Controllers
 
       
         [HttpPost("get")]
-        public  async Task<IActionResult>commonGet([FromBody]CommonModel data)
+        public  async Task<IActionResult>commonGet([FromBody] CreateModel createModel)
         {
            
-            var result = await _masterRepository.commonGet(data);
+            var result = await _masterRepository.commonGet(createModel);
             return Ok(result);
         }
 
 
+        [HttpDelete("delete")]
+        public  async Task<IActionResult>commonDelete([FromBody]DeleteModel deleteModel)
+        {        
+            var result = await _masterRepository.commonDelete(deleteModel);
+            return Ok(result);
+        }
+
+
+
         [HttpPost("email")]
-        public async Task<IActionResult> commonApiForEmail(CommonModel commonModel)
+        public async Task<IActionResult> commonApiForEmail(CreateModel createModel)
         {
-            var result = await _masterRepository.commonApiForEmail(commonModel);
+            var result = await _masterRepository.commonApiForEmail(createModel);
             return Ok(result);
         }
 

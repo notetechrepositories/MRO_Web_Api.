@@ -42,6 +42,8 @@ namespace MRO_Api.Utilities
              }
          }
  */
+
+
         public async Task<bool> SendMail(EmailDtoModel emailDtoModel)
         {
             try
@@ -65,6 +67,8 @@ namespace MRO_Api.Utilities
                     }
                 }
 
+
+
                 // Add BCC recipients
                 if (!string.IsNullOrEmpty(emailDtoModel.t16_email_bcc))
                 {
@@ -73,6 +77,7 @@ namespace MRO_Api.Utilities
                         mimeMessage.Bcc.Add(MailboxAddress.Parse(bccEmail.Trim()));
                     }
                 }
+
 
                
                 mimeMessage.Subject = emailDtoModel.t16_email_subject;
@@ -94,6 +99,9 @@ namespace MRO_Api.Utilities
                 return false ; // Failure
             }
         }
+
+
+   
 
 
 
