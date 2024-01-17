@@ -39,71 +39,106 @@ namespace MRO_Api.Repositories
 
 
 
-        /*public async Task<ApiResponseModel<dynamic>> commonGet(CommonModel commonModel)
-        {
-            try
+
+
+        /*    public async Task<ApiResponseModel<dynamic>> commonGet(CreateModel createModel)
             {
-                using (var connection = _context.CreateConnection())
+                try
                 {
-                    // Serialize the request object to JSON
-                    var jsonData = JsonConvert.SerializeObject(commonModel);
-
-                    // Call the stored procedure
-                    var result = await connection.QueryAsync(
-                        "api_crud_sp", // Stored procedure name
-                        new { jsonData },
-                        commandType: CommandType.StoredProcedure
-                    );
-
-                    var resultDataJson = result.FirstOrDefault()?.data;
-                    var resultDataObject = JsonConvert.DeserializeObject<ResultDataObject>(resultDataJson);
-
-                    // Access the message directly from the result variable
-                    var message = result.FirstOrDefault()?.message;
-
-                    var status = result.FirstOrDefault()?.status;
-
-                    var dataDeserialize = resultDataObject?.ResultData;
+                    dynamic finalResult = new List<Dictionary<string, object>>();
+                    using (var connection = _context.CreateConnection())
+                    {
+                        var jsonData = JsonConvert.SerializeObject(createModel);
 
 
+                        var result = await connection.QueryAsync(
+                            "api_crud_sp",
+                            new { jsonData },
+                            commandType: CommandType.StoredProcedure
+                        );
+
+                        var firstResult = result.FirstOrDefault();
+                        if (firstResult != null)
+                        {
+                            var testData = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(firstResult);
+
+
+
+                            foreach (var item in testData)
+                            {
+                                var accumulatedPairs = new Dictionary<string, object>();
+                                foreach (var keyValuePair in item)
+                                {
+                                    if (keyValuePair.Value is JArray)
+                                    {
+                                        var jsonArray = keyValuePair.Value.ToObject<List<Dictionary<string, object>>>();
+                                        accumulatedPairs[keyValuePair.Key] = jsonArray;
+                                    }
+                                    else if (keyValuePair.Value is string)
+                                    {
+                                        accumulatedPairs[keyValuePair.Key] = keyValuePair.Value.ToString();
+                                    }
+                                    else
+                                    {
+
+                                        accumulatedPairs[keyValuePair.Key] = keyValuePair.Value;
+                                    }
+                                }
+                                finalResult.Add(accumulatedPairs);
+                            }
+
+                            var message = firstResult.message;
+                            var status = firstResult.status;
+
+                            return new ApiResponseModel<dynamic>
+                            {
+                                Data = finalResult,
+                                Message = message,
+                                Status = Convert.ToInt32(status)
+                            };
+                        }
+                        else
+                        {
+                            return new ApiResponseModel<dynamic>
+                            {
+
+                                Data = null,
+                                Message = "No data returned",
+                                Status = 204 // No Content
+                            };
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    var t = ex.Message;
+                    var errorDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(ex.Message);
 
                     return new ApiResponseModel<dynamic>
                     {
-                        Data = dataDeserialize,
-                        Message = message,
-                        Status = status
+                        Data = null,
+                        Message = errorDict["Message"],
+                        Status = Convert.ToInt32(errorDict["Status"])
                     };
                 }
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponseModel<dynamic>
-                {
-                    Data = 0,
-                    Message = ex.Message,
-                    Status = 400
-                };
-            }
-        }*/
+            }*/
 
 
 
+        /*   var getMenuJson = result.First().data;
 
 
-        /*   public class ResultDataObject
+           var getMenuList = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(getMenuJson);
+
+           // Iterate through each dictionary in the 'getMenu' list
+           foreach (var menuDict in getMenuList)
            {
-               [JsonProperty("ResultData")]
-               public List<Dictionary<string, object>> ResultData { get; set; }
+               if (menuDict.ContainsKey("t15_file_path"))
+               {
 
-               [JsonProperty("status")]
-               public string Status { get; set; }
-
-               [JsonProperty("message")]
-               public string Message { get; set; }
+                   var t15FilePathValue = menuDict["t15_file_path"];
+               }
            }*/
-
-
-
 
 
 
@@ -122,50 +157,52 @@ namespace MRO_Api.Repositories
                         commandType: CommandType.StoredProcedure
                     );
 
-                    var firstResult = result.FirstOrDefault();
+                    var firstResult = result.FirstOrDefault() as IDictionary<string, object>;
                     if (firstResult != null)
                     {
-                        var testData = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(firstResult.data);
-
-                        foreach (var item in testData)
+                        foreach (var kvp in firstResult)
                         {
                             var accumulatedPairs = new Dictionary<string, object>();
-                            foreach (var keyValuePair in item)
+                            var propertyName = kvp.Key;
+                            var propertyValue = kvp.Value;
+
+                            if (propertyName != "message" && propertyName != "status")
                             {
-                                if (keyValuePair.Value is JArray)
-                                {                                
-                                    var jsonArray = keyValuePair.Value.ToObject<List<Dictionary<string, object>>>();                                 
-                                    accumulatedPairs[keyValuePair.Key] = jsonArray;
+                                if (propertyValue is string stringValue)
+                                {
+                                    try
+                                    {
+                                        // Try to parse the string as JSON array
+                                        var jsonArray = JArray.Parse(stringValue);
+                                        accumulatedPairs[propertyName] = jsonArray.ToObject<List<Dictionary<string, object>>>();
+                                    }
+                                    catch (JsonException)
+                                    {
+                                        // Handle as a plain string if parsing as JSON array fails
+                                        accumulatedPairs[propertyName] = stringValue;
+                                    }
                                 }
-                                else if (keyValuePair.Value is string)
-                                {                                
-                                    accumulatedPairs[keyValuePair.Key] = keyValuePair.Value.ToString();
-                                }                              
                                 else
                                 {
-                                   
-                                    accumulatedPairs[keyValuePair.Key] = keyValuePair.Value;
+                                    accumulatedPairs[propertyName] = propertyValue;
                                 }
+
+                                finalResult.Add(accumulatedPairs);
                             }
-                            finalResult.Add(accumulatedPairs);
+                            
                         }
-
-                        var message = firstResult.message;
-                        var status = firstResult.status;
-
                         return new ApiResponseModel<dynamic>
                         {
                             Data = finalResult,
-                            Message = message,
-                            Status = Convert.ToInt32(status)
+                            Message = firstResult["message"]?.ToString(),
+                            Status = Convert.ToInt32(firstResult["status"])
                         };
                     }
                     else
-                    {                      
+                    {
                         return new ApiResponseModel<dynamic>
-                        {                       
-
-                           Data = null,
+                        {
+                            Data = null,
                             Message = "No data returned",
                             Status = 204 // No Content
                         };
@@ -174,14 +211,13 @@ namespace MRO_Api.Repositories
             }
             catch (Exception ex)
             {
-                var t = ex.Message;
                 var errorDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(ex.Message);
- 
+
                 return new ApiResponseModel<dynamic>
                 {
                     Data = null,
-                    Message = errorDict["Message"],
-                    Status = Convert.ToInt32(errorDict["Status"]) 
+                    Message = errorDict?["Message"]?.ToString() ?? "An error occurred",
+                    Status =  500 // Internal Server Error
                 };
             }
         }
@@ -275,20 +311,6 @@ namespace MRO_Api.Repositories
 
 
 
-        /*   var getMenuJson = result.First().data;
-
-
-           var getMenuList = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(getMenuJson);
-
-           // Iterate through each dictionary in the 'getMenu' list
-           foreach (var menuDict in getMenuList)
-           {
-               if (menuDict.ContainsKey("t15_file_path"))
-               {
-
-                   var t15FilePathValue = menuDict["t15_file_path"];
-               }
-           }*/
 
 
 
@@ -337,8 +359,6 @@ namespace MRO_Api.Repositories
 
                         // Encrypt the otpTimeDictionary
                         string encryptedData = Encryption.encrypt(JsonConvert.SerializeObject(otpTimeDictionary));
-
-                       
                         
                         return new ApiResponseModel<dynamic>
                         {
@@ -346,6 +366,7 @@ namespace MRO_Api.Repositories
                             Message = "Successfully retrieved data",
                             Status = 200
                         };
+
                     }
                     return new ApiResponseModel<dynamic>
                     {

@@ -78,7 +78,6 @@ namespace MRO_Api.Utilities
                     }
                 }
 
-
                
                 mimeMessage.Subject = emailDtoModel.t16_email_subject;
                 mimeMessage.Body = new TextPart(TextFormat.Html) { Text = emailBody.ToString() };
@@ -99,13 +98,6 @@ namespace MRO_Api.Utilities
                 return false ; // Failure
             }
         }
-
-
-   
-
-
-
-
-
+        
     }
 }
