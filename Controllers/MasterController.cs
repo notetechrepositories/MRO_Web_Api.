@@ -1,10 +1,15 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Dapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
+using MRO_Api.Context;
 using MRO_Api.IRepository;
 using MRO_Api.Model;
+using MySqlX.XDevAPI.Common;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Data;
 using System.Text.Json.Nodes;
 using static MRO_Api.Model.CommonModel;
 
@@ -15,20 +20,48 @@ namespace MRO_Api.Controllers
     public class MasterController : ControllerBase
     {
         private readonly IMasterRepository _masterRepository;
-        public MasterController(IMasterRepository masterRepository)
+
+        private readonly DapperContext dapperContext;
+
+        public MasterController(IMasterRepository masterRepository,DapperContext dapper)
         {
             _masterRepository = masterRepository;
+            dapperContext = dapper;
         }
 
 
       
         [HttpPost("get")]
-        public  async Task<IActionResult>commonGet([FromBody] CreateModel createModel)
+        public  async Task<IActionResult>commonGet( CreateModel createModel)
         {
            
             var result = await _masterRepository.commonGet(createModel);
             return Ok(result);
         }
+        
+        
+      /*  [HttpPost("test")]
+        public  async Task<IActionResult>test(string data,IFormFile formFile)
+        {
+            data = data.Trim('"');
+
+            dynamic result ;
+
+            using (var connection = dapperContext.CreateConnection())
+            {
+                 result = await connection.QueryAsync(
+                "api_crud_sp",
+                new { jsonData=data },
+                commandType: CommandType.StoredProcedure
+                );
+            }
+            return Ok(result);
+        }
+*/
+
+
+
+
 
 
         [HttpDelete("delete")]
