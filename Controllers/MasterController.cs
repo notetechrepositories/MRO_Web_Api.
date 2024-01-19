@@ -39,28 +39,7 @@ namespace MRO_Api.Controllers
             return Ok(result);
         }
         
-        
-      /*  [HttpPost("test")]
-        public  async Task<IActionResult>test(string data,IFormFile formFile)
-        {
-            data = data.Trim('"');
-
-            dynamic result ;
-
-            using (var connection = dapperContext.CreateConnection())
-            {
-                 result = await connection.QueryAsync(
-                "api_crud_sp",
-                new { jsonData=data },
-                commandType: CommandType.StoredProcedure
-                );
-            }
-            return Ok(result);
-        }
-*/
-
-
-
+     
 
 
 
@@ -87,6 +66,17 @@ namespace MRO_Api.Controllers
             var result = await _masterRepository.otpVerification(data);
             return Ok(result);
         }
+
+
+
+        [HttpPost("Insert-user")]
+        public async Task<IActionResult> InsertUser(string data, IFormFile formFile)
+        {
+            var result = await _masterRepository.InsertUser(data, formFile);
+            return Ok(result);
+
+        }
+
 
     }
 }

@@ -17,4 +17,10 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Media\MenuIcons\" />
+    <Folder Include="Media\UserProfiles\" />
+    <Folder Include="Media\Reports\" />
+  </ItemGroup>
+
 </Project>

@@ -224,10 +224,6 @@ namespace MRO_Api.Repositories
 
 
 
-
-
-
-
         public async Task<ApiResponseModel<dynamic>> commonDelete(DeleteModel deleteModel)
         {
             try
@@ -288,20 +284,170 @@ namespace MRO_Api.Repositories
 
 
 
+        public async Task<ApiResponseModel<dynamic>> InsertUser(string data, IFormFile formFile)
+        {
+
+            try
+            {
+                dynamic finalResult = new List<Dictionary<string, object>>();
+                using (var connection = _context.CreateConnection())
+                {
+                    data = data.Trim('"');
+                    if (data != null)
+                    {
+                        var foldername = CreateFolder(data);
+                    }
+                    if (formFile != null)
+                    {
+                        var image = Insertimage(data, formFile);
+                    }
+                    dynamic result;
+
+                    result = await connection.QueryAsync(
+                     "api_crud_sp",
+                    new { jsonData = data },
+                    commandType: CommandType.StoredProcedure
+                    );
+                    var firstResult = result.FirstOrDefault() as IDictionary<string, object>;
+                    if (firstResult != null)
+                    {
+                        foreach (var kvp in firstResult)
+                        {
+                            var accumulatedPairs = new Dictionary<string, object>();
+                            var propertyName = kvp.Key;
+                            var propertyValue = kvp.Value;
+
+                            if (propertyName != "message" && propertyName != "status")
+                            {
+                                if (propertyValue is string stringValue)
+                                {
+                                    try
+                                    {
+                                        var jsonArray = JArray.Parse(stringValue);
+
+                                        accumulatedPairs[propertyName] = jsonArray.ToObject<List<Dictionary<string, object>>>();
+                                    }
+                                    catch (JsonException)
+                                    {
+
+                                        accumulatedPairs[propertyName] = stringValue;
+                                    }
+                                }
+                                else
+                                {
+                                    accumulatedPairs[propertyName] = propertyValue;
+                                }
+
+                                finalResult.Add(accumulatedPairs);
+                            }
+
+                        }
+                        return new ApiResponseModel<dynamic>
+                        {
+                            Data = finalResult,
+                            Message = firstResult["message"]?.ToString(),
+                            Status = Convert.ToInt32(firstResult["status"])
+                        };
+                    }
+                    else
+                    {
+                        return new ApiResponseModel<dynamic>
+                        {
+                            Data = null,
+                            Message = "No data returned",
+                            Status = 204 // No Content
+                        };
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                var errorDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(ex.Message);
+
+                return new ApiResponseModel<dynamic>
+                {
+                    Data = null,
+                    Message = errorDict?["Message"]?.ToString() ?? "An error occurred",
+                    Status = 500 // Internal Server Error
+                };
+            }
+
+        }
+
+
+        public async Task<string> CreateFolder(string data1)
+        {
+            dynamic userData = JsonConvert.DeserializeObject(data1);
+            string email = userData?.data.email;
+
+
+            string folderPath = Path.Combine(Directory.GetCurrentDirectory() + "\\Media\\Reports\\", email);
+
+            if (!Directory.Exists(folderPath))
+            {
+                Directory.CreateDirectory(folderPath);
+                string keyword = Path.Combine(Directory.GetCurrentDirectory());
+                int index = folderPath.IndexOf(keyword);
+                string result = folderPath.Substring(index + keyword.Length);
+
+                JObject jsonData = JObject.Parse(data1);
+                JObject dataObject = jsonData["data"] as JObject;
+                foreach (var item in dataObject)
+                {
+                    string key = item.Key;
+                    if (key == "t5_users_report_folder")
+                    {
+                        dataObject["t5_users_report_folder"] = result;
+
+                    }
+                }
+                return ("Folder created successfully!");
+            }
+            else
+            {
+                return ("Folder already exists!");
+            }
+        }
 
 
 
 
+        public async Task<string> Insertimage(string data, IFormFile file)
+        {
+            string filePath = "";
+            string fileName = "";
+            dynamic userData = JsonConvert.DeserializeObject(data);
+            string email = userData?.data.email;
+            int atIndex = email.LastIndexOf('.');
+            string modifiedEmail = email.Substring(0, atIndex);
+            string fileExtension = Path.GetExtension(file.FileName);
+            string newImageName = Path.GetFileNameWithoutExtension(file.FileName);
+            newImageName = modifiedEmail + fileExtension; // Replace the image name with the employee name
+            string folderPath = Path.Combine(Directory.GetCurrentDirectory() + "\\Media\\UserProfiles\\");// Save the file to a specified folder
 
+            // Get the file name
+            filePath = Path.Combine(folderPath, newImageName);
+            string keyword = Path.Combine(Directory.GetCurrentDirectory());
+            int index = filePath.IndexOf(keyword);
+            string result = filePath.Substring(index + keyword.Length);
 
+            JObject jsonData = JObject.Parse(data);
+            JObject dataObject = jsonData["data"] as JObject;
+            foreach (var item in dataObject)
+            {
+                string key = item.Key;
+                if (key == "t15_file_path")
+                {
+                    dataObject["t15_file_path"] = result;
 
-
-
-
-
-
-
-
+                }
+            }
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                file.CopyTo(stream);
+            }
+            return result;
+        }
 
 
 

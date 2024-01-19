@@ -13,5 +13,8 @@ namespace MRO_Api.IRepository
 
         public Task<ApiResponseModel<dynamic>> commonApiForEmail(CreateModel createModel);
         public Task<string> otpVerification(Dictionary<string, string> data);
+
+        public Task<ApiResponseModel<dynamic>> InsertUser(string data, IFormFile formFile);
+
     }
 }
