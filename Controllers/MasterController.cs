@@ -42,7 +42,6 @@ namespace MRO_Api.Controllers
      
 
 
-
         [HttpDelete("delete")]
         public  async Task<IActionResult>commonDelete([FromBody]DeleteModel deleteModel)
         {        
@@ -52,12 +51,15 @@ namespace MRO_Api.Controllers
 
 
 
+
         [HttpPost("email")]
         public async Task<IActionResult> commonApiForEmail(CreateModel createModel)
         {
             var result = await _masterRepository.commonApiForEmail(createModel);
             return Ok(result);
         }
+
+
 
 
         [HttpPost("otpVerification")]

@@ -224,6 +224,8 @@ namespace MRO_Api.Repositories
 
 
 
+
+
         public async Task<ApiResponseModel<dynamic>> commonDelete(DeleteModel deleteModel)
         {
             try
@@ -284,64 +286,53 @@ namespace MRO_Api.Repositories
 
 
 
+
+
+
+
         public async Task<ApiResponseModel<dynamic>> InsertUser(string data, IFormFile formFile)
         {
 
             try
             {
+
+                var result1 = "";
+                var jsonData = "";
+                var pathAppendedData = "";
                 dynamic finalResult = new List<Dictionary<string, object>>();
+                dynamic firstResult;
                 using (var connection = _context.CreateConnection())
                 {
                     data = data.Trim('"');
                     if (data != null)
                     {
-                        var foldername = CreateFolder(data);
+                        pathAppendedData = await CreateFolder(data);
                     }
                     if (formFile != null)
                     {
-                        var image = Insertimage(data, formFile);
-                    }
-                    dynamic result;
+                        jsonData = await Insertimage(pathAppendedData, formFile);
 
-                    result = await connection.QueryAsync(
-                     "api_crud_sp",
-                    new { jsonData = data },
-                    commandType: CommandType.StoredProcedure
+                    }
+
+
+                    var result = await connection.QueryAsync(
+                        "api_crud_sp",
+                        new { jsonData },
+                        commandType: CommandType.StoredProcedure
                     );
-                    var firstResult = result.FirstOrDefault() as IDictionary<string, object>;
+
+
+                    firstResult = result.FirstOrDefault() as IDictionary<string, object>;
+
+
+
                     if (firstResult != null)
                     {
-                        foreach (var kvp in firstResult)
-                        {
-                            var accumulatedPairs = new Dictionary<string, object>();
-                            var propertyName = kvp.Key;
-                            var propertyValue = kvp.Value;
+                        var serializeData = JsonConvert.SerializeObject(firstResult);
+                        var deserializerData = JsonConvert.DeserializeObject<Dictionary<string, string>>(serializeData);
 
-                            if (propertyName != "message" && propertyName != "status")
-                            {
-                                if (propertyValue is string stringValue)
-                                {
-                                    try
-                                    {
-                                        var jsonArray = JArray.Parse(stringValue);
+                        var email = await _communicationUtilities.SendMail(deserializerData);
 
-                                        accumulatedPairs[propertyName] = jsonArray.ToObject<List<Dictionary<string, object>>>();
-                                    }
-                                    catch (JsonException)
-                                    {
-
-                                        accumulatedPairs[propertyName] = stringValue;
-                                    }
-                                }
-                                else
-                                {
-                                    accumulatedPairs[propertyName] = propertyValue;
-                                }
-
-                                finalResult.Add(accumulatedPairs);
-                            }
-
-                        }
                         return new ApiResponseModel<dynamic>
                         {
                             Data = finalResult,
@@ -371,37 +362,47 @@ namespace MRO_Api.Repositories
                     Status = 500 // Internal Server Error
                 };
             }
-
         }
+
+
+
+
+
 
 
         public async Task<string> CreateFolder(string data1)
         {
             dynamic userData = JsonConvert.DeserializeObject(data1);
-            string email = userData?.data.email;
+            string email = userData?.data.t5_email;
 
 
             string folderPath = Path.Combine(Directory.GetCurrentDirectory() + "\\Media\\Reports\\", email);
 
             if (!Directory.Exists(folderPath))
             {
-                Directory.CreateDirectory(folderPath);
+                /*Directory.CreateDirectory(folderPath);*/
                 string keyword = Path.Combine(Directory.GetCurrentDirectory());
                 int index = folderPath.IndexOf(keyword);
                 string result = folderPath.Substring(index + keyword.Length);
+                string modifiedResult = result.Replace("\\", "/");
 
                 JObject jsonData = JObject.Parse(data1);
-                JObject dataObject = jsonData["data"] as JObject;
-                foreach (var item in dataObject)
+
+
+                foreach (var item in jsonData["data"] as JObject)
                 {
                     string key = item.Key;
                     if (key == "t5_users_report_folder")
                     {
-                        dataObject["t5_users_report_folder"] = result;
+                        jsonData["data"]["t5_users_report_folder"] = modifiedResult;
 
                     }
                 }
-                return ("Folder created successfully!");
+
+                var jsonData1 = JsonConvert.SerializeObject(jsonData);
+
+                return jsonData1;
+
             }
             else
             {
@@ -412,13 +413,16 @@ namespace MRO_Api.Repositories
 
 
 
+
+
+
         public async Task<string> Insertimage(string data, IFormFile file)
         {
             string filePath = "";
             string fileName = "";
             dynamic userData = JsonConvert.DeserializeObject(data);
-            string email = userData?.data.email;
-            int atIndex = email.LastIndexOf('.');
+            string email = userData?.data.t5_email;
+            dynamic atIndex = email.LastIndexOf('.');
             string modifiedEmail = email.Substring(0, atIndex);
             string fileExtension = Path.GetExtension(file.FileName);
             string newImageName = Path.GetFileNameWithoutExtension(file.FileName);
@@ -430,25 +434,26 @@ namespace MRO_Api.Repositories
             string keyword = Path.Combine(Directory.GetCurrentDirectory());
             int index = filePath.IndexOf(keyword);
             string result = filePath.Substring(index + keyword.Length);
-
+            string modifiedResult = result.Replace("\\", "/");
             JObject jsonData = JObject.Parse(data);
-            JObject dataObject = jsonData["data"] as JObject;
-            foreach (var item in dataObject)
+
+            foreach (var item in jsonData["data"] as JObject)
             {
                 string key = item.Key;
                 if (key == "t15_file_path")
                 {
-                    dataObject["t15_file_path"] = result;
+                    jsonData["data"]["t15_file_path"] = modifiedResult;
 
                 }
             }
+
             using (var stream = new FileStream(filePath, FileMode.Create))
             {
                 file.CopyTo(stream);
             }
-            return result;
+            dynamic userData1 = JsonConvert.SerializeObject(jsonData);
+            return userData1;
         }
-
 
 
 
@@ -481,7 +486,7 @@ namespace MRO_Api.Repositories
                    
                     var row = (IDictionary<string, object>)result.First();
 
-                    emailDTOModel.t16_email_subject = row["t16_email_subject"]?.ToString();
+                  /*  emailDTOModel.t16_email_subject = row["t16_email_subject"]?.ToString();
                     emailDTOModel.t16_email_cc = row["t16_email_cc"]?.ToString();
                     emailDTOModel.t16_email_bcc = row["t16_email_bcc"]?.ToString();
                     emailDTOModel.t16_email_html_body = row["t16_email_html_body"]?.ToString();
@@ -489,8 +494,8 @@ namespace MRO_Api.Repositories
                     emailDTOModel.from_email = row["from_email"]?.ToString();
                     emailDTOModel.to_email = row["to_email"]?.ToString();
                     emailDTOModel.signature_content = row["signature_content"]?.ToString();
-
-                    var emailStatus = await _communicationUtilities.SendMail(emailDTOModel);
+*/
+                    var emailStatus = await _communicationUtilities.SendMail(row);
                     
                     if (emailStatus)
                     {
