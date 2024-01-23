@@ -225,6 +225,67 @@ namespace MRO_Api.Repositories
 
 
 
+        public async Task<ApiResponseModel<dynamic>> UpdateUser(string data, IFormFile formFile)
+        {
+            try
+            {
+                var jsonData = "";
+                dynamic finalResult = new List<Dictionary<string, object>>();
+
+                using (var connection = _context.CreateConnection())
+                {
+                    if (formFile != null)
+                    {
+                        jsonData = await Insertimage(data, formFile);
+
+                    }
+
+                    var result = await connection.QueryAsync(
+                        "api_crud_sp",
+                        new { jsonData },
+                        commandType: CommandType.StoredProcedure
+                    );
+
+                    var firstResult = result.FirstOrDefault() as IDictionary<string, object>;
+                    if (firstResult != null)
+                    {
+
+                        return new ApiResponseModel<dynamic>
+                        {
+                            Data = finalResult,
+                            Message = firstResult["message"]?.ToString(),
+                            Status = Convert.ToInt32(firstResult["status"])
+                        };
+                    }
+                    else
+                    {
+                        return new ApiResponseModel<dynamic>
+                        {
+                            Data = null,
+                            Message = "No data returned",
+                            Status = 204 // No Content
+                        };
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                var errorDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(ex.Message);
+
+                return new ApiResponseModel<dynamic>
+                {
+                    Data = null,
+                    Message = errorDict?["Message"]?.ToString() ?? "An error occurred",
+                    Status = 500 // Internal Server Error
+                };
+            }
+
+
+        }
+
+
+
+
 
         public async Task<ApiResponseModel<dynamic>> commonDelete(DeleteModel deleteModel)
         {

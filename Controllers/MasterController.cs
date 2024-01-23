@@ -23,28 +23,28 @@ namespace MRO_Api.Controllers
 
         private readonly DapperContext dapperContext;
 
-        public MasterController(IMasterRepository masterRepository,DapperContext dapper)
+        public MasterController(IMasterRepository masterRepository, DapperContext dapper)
         {
             _masterRepository = masterRepository;
             dapperContext = dapper;
         }
 
 
-      
+
         [HttpPost("get")]
-        public  async Task<IActionResult>commonGet( CreateModel createModel)
+        public async Task<IActionResult> commonGet(CreateModel createModel)
         {
-           
+
             var result = await _masterRepository.commonGet(createModel);
             return Ok(result);
         }
-        
-     
+
+
 
 
         [HttpDelete("delete")]
-        public  async Task<IActionResult>commonDelete([FromBody]DeleteModel deleteModel)
-        {        
+        public async Task<IActionResult> commonDelete([FromBody] DeleteModel deleteModel)
+        {
             var result = await _masterRepository.commonDelete(deleteModel);
             return Ok(result);
         }
@@ -63,7 +63,7 @@ namespace MRO_Api.Controllers
 
 
         [HttpPost("otpVerification")]
-        public async Task<IActionResult>  otpVerification(Dictionary<string, string> data)
+        public async Task<IActionResult> otpVerification(Dictionary<string, string> data)
         {
             var result = await _masterRepository.otpVerification(data);
             return Ok(result);
@@ -78,6 +78,18 @@ namespace MRO_Api.Controllers
             return Ok(result);
 
         }
+
+
+
+
+        [HttpPut("Update-user")]
+        public async Task<IActionResult> UpdateUser(string data, IFormFile formFile)
+        {
+            var result = await _masterRepository.UpdateUser(data, formFile);
+            return Ok(result);
+
+        }
+
 
 
     }
