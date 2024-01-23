@@ -72,7 +72,7 @@ namespace MRO_Api.Controllers
 
 
         [HttpPost("Insert-user")]
-        public async Task<IActionResult> InsertUser(string data, IFormFile formFile)
+        public async Task<IActionResult> InsertUser(string data, [FromForm] IFormFile? formFile)
         {
             var result = await _masterRepository.InsertUser(data, formFile);
             return Ok(result);
@@ -83,7 +83,7 @@ namespace MRO_Api.Controllers
 
 
         [HttpPut("Update-user")]
-        public async Task<IActionResult> UpdateUser(string data, IFormFile formFile)
+        public async Task<IActionResult> UpdateUser(string data,[FromForm] IFormFile? formFile )
         {
             var result = await _masterRepository.UpdateUser(data, formFile);
             return Ok(result);

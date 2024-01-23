@@ -106,15 +106,20 @@ namespace MRO_Api.Utilities
         {
             try
             {
+
                 // Build email body
                 StringBuilder emailBody = new("<html><body>");
                 emailBody.Append(emailDetails["t16_email_html_body"]);
                 emailBody.Append(emailDetails["signature_content"]);
 
+
+
                 // Create a new MimeMessage
                 var mimeMessage = new MimeMessage();
                 mimeMessage.From.Add(MailboxAddress.Parse(emailDetails["from_email"].ToString()));
                 mimeMessage.To.Add(MailboxAddress.Parse(emailDetails["to_email"].ToString()));
+
+
 
                 // Add CC recipients
                 if (!string.IsNullOrEmpty(emailDetails["t16_email_cc"].ToString()))
@@ -147,7 +152,9 @@ namespace MRO_Api.Utilities
                 smtp.Send(mimeMessage);
                 smtp.Disconnect(true);
 
+
                 return true; // Success
+
             }
             catch (Exception ex)
             {

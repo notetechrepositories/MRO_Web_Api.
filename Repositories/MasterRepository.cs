@@ -142,6 +142,7 @@ namespace MRO_Api.Repositories
 
 
 
+
         public async Task<ApiResponseModel<dynamic>> commonGet(CreateModel createModel)
         {
             try
@@ -225,7 +226,7 @@ namespace MRO_Api.Repositories
 
 
 
-        public async Task<ApiResponseModel<dynamic>> UpdateUser(string data, IFormFile formFile)
+        public async Task<ApiResponseModel<dynamic>> UpdateUser(string data, IFormFile? formFile)
         {
             try
             {
