@@ -534,6 +534,7 @@ namespace MRO_Api.Repositories
             {
                 using (var connection = _context.CreateConnection())
                 {
+                    string modifiedEmail = "";
                     // Serialize the request object to JSON
                     var jsonData = JsonConvert.SerializeObject(createModel);
 
@@ -545,20 +546,45 @@ namespace MRO_Api.Repositories
                     );
 
                     var emailDTOModel = new EmailDtoModel();
-                   
+
                     var row = (IDictionary<string, object>)result.First();
 
-                  /*  emailDTOModel.t16_email_subject = row["t16_email_subject"]?.ToString();
-                    emailDTOModel.t16_email_cc = row["t16_email_cc"]?.ToString();
-                    emailDTOModel.t16_email_bcc = row["t16_email_bcc"]?.ToString();
-                    emailDTOModel.t16_email_html_body = row["t16_email_html_body"]?.ToString();
-                    emailDTOModel.from_email_password = row["from_email_password"]?.ToString();
-                    emailDTOModel.from_email = row["from_email"]?.ToString();
-                    emailDTOModel.to_email = row["to_email"]?.ToString();
-                    emailDTOModel.signature_content = row["signature_content"]?.ToString();
-*/
+                    /*  emailDTOModel.t16_email_subject = row["t16_email_subject"]?.ToString();
+                      emailDTOModel.t16_email_cc = row["t16_email_cc"]?.ToString();
+                      emailDTOModel.t16_email_bcc = row["t16_email_bcc"]?.ToString();
+                      emailDTOModel.t16_email_html_body = row["t16_email_html_body"]?.ToString();
+                      emailDTOModel.from_email_password = row["from_email_password"]?.ToString();
+                      emailDTOModel.from_email = row["from_email"]?.ToString();
+                      emailDTOModel.to_email = row["to_email"]?.ToString();
+                      emailDTOModel.signature_content = row["signature_content"]?.ToString();
+  */
                     var emailStatus = await _communicationUtilities.SendMail(row);
-                    
+                    var toMail = row["to_email"].ToString();
+
+                    int atIndex = toMail.IndexOf('@');
+
+                    if (atIndex >= 0)
+                    {
+                        // Split the email address into two parts: prefix and domain
+                        string prefix = toMail.Substring(0, atIndex);
+                        string domain = toMail.Substring(atIndex);
+
+                        // Replace the prefix with asterisks
+                        prefix = new string('*', prefix.Length - 2);
+                        string beforeAtSymbol = toMail.Substring(0, toMail.IndexOf('@'));
+
+                        // Combine the modified prefix and the domain
+                        modifiedEmail = prefix + beforeAtSymbol.Substring(beforeAtSymbol.Length - 2) + domain;
+
+                        // Now 'modifiedEmail' contains "****mailto:99@gmail.com"
+
+                    }
+                    else
+                    {
+                        // Handle invalid email address
+                        Console.WriteLine("Invalid email address");
+                    }
+
                     if (emailStatus)
                     {
                         var currentTime = DateTime.Now.ToString();
@@ -572,10 +598,10 @@ namespace MRO_Api.Repositories
 
                         // Encrypt the otpTimeDictionary
                         string encryptedData = Encryption.encrypt(JsonConvert.SerializeObject(otpTimeDictionary));
-                        
+
                         return new ApiResponseModel<dynamic>
                         {
-                            Data = new Dictionary<string, string>() { {"encryptedData", encryptedData } ,{ "time" , currentTime } },
+                            Data = new Dictionary<string, string>() { { "encryptedData", encryptedData }, { "time", currentTime }, { "email", modifiedEmail } },
                             Message = "Successfully retrieved data",
                             Status = 200
                         };
@@ -591,19 +617,20 @@ namespace MRO_Api.Repositories
             }
             catch (Exception ex)
             {
+
+                var errorDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(ex.Message);
+
                 return new ApiResponseModel<dynamic>
                 {
-                    Data = 0,
-                    Message = ex.Message,
-                    Status = 400
+                    Data = null,
+                    Message = errorDict["Message"],
+                    Status = Convert.ToInt32(errorDict["Status"])
                 };
             }
         }
 
 
 
-
-       
         public async Task<string> otpVerification(Dictionary<string,string> data)
         {
             try
