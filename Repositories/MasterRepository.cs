@@ -246,6 +246,7 @@ namespace MRO_Api.Repositories
                         new { jsonData },
                         commandType: CommandType.StoredProcedure
                     );
+                      
 
                     var firstResult = result.FirstOrDefault() as IDictionary<string, object>;
                     if (firstResult != null)
@@ -474,7 +475,7 @@ namespace MRO_Api.Repositories
             dynamic userData = JsonConvert.DeserializeObject(data);
             string email = userData?.data.t5_email;
             dynamic atIndex = email.LastIndexOf('.');
-            string modifiedEmail = email.Substring(0, atIndex);
+            string modifiedEmail = email.Substring(0, atIndex) ;
             string fileExtension = Path.GetExtension(file.FileName);
 
             string newImageName = Path.GetFileNameWithoutExtension(file.FileName);
