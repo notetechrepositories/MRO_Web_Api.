@@ -83,7 +83,7 @@ namespace MRO_Api.Controllers
 
 
         [HttpPut("Update-user")]
-        public async Task<IActionResult> UpdateUser(string data,[FromForm] IFormFile? formFile )
+        public async Task<IActionResult> UpdateUser(string data, IFormFile? formFile )
         {
             var result = await _masterRepository.UpdateUser(data, formFile);
             return Ok(result);

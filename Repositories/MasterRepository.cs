@@ -485,10 +485,10 @@ namespace MRO_Api.Repositories
             dynamic userData = JsonConvert.DeserializeObject(data);
             string email = userData?.data.t5_email;
             dynamic atIndex = email.LastIndexOf('.');
-            string modifiedEmail = email.Substring(0, atIndex);
+            string modifiedEmail = email.Substring(0, atIndex) ;
             string fileExtension = Path.GetExtension(file.FileName);
             string newImageName = Path.GetFileNameWithoutExtension(file.FileName);
-            newImageName = modifiedEmail + fileExtension; // Replace the image name with the employee name
+            newImageName = modifiedEmail + DateTime.Now.Ticks + fileExtension; // Replace the image name with the employee name
             string folderPath = Path.Combine(Directory.GetCurrentDirectory() + "\\Media\\UserProfiles\\");// Save the file to a specified folder
 
             // Get the file name
