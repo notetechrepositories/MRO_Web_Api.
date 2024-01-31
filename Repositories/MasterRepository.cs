@@ -280,8 +280,6 @@ namespace MRO_Api.Repositories
                     Status = 500 // Internal Server Error
                 };
             }
-
-
         }
 
 
@@ -354,10 +352,8 @@ namespace MRO_Api.Repositories
 
         public async Task<ApiResponseModel<dynamic>> InsertUser(string data, IFormFile formFile)
         {
-
             try
             {
-
                 var result1 = "";
                 var jsonData = "";
                 var pathAppendedData = "";
@@ -375,19 +371,12 @@ namespace MRO_Api.Repositories
                         jsonData = await Insertimage(pathAppendedData, formFile);
 
                     }
-
-
                     var result = await connection.QueryAsync(
                         "api_crud_sp",
                         new { jsonData },
                         commandType: CommandType.StoredProcedure
                     );
-
-
                     firstResult = result.FirstOrDefault() as IDictionary<string, object>;
-
-
-
                     if (firstResult != null)
                     {
                         var serializeData = JsonConvert.SerializeObject(firstResult);
@@ -487,8 +476,9 @@ namespace MRO_Api.Repositories
             dynamic atIndex = email.LastIndexOf('.');
             string modifiedEmail = email.Substring(0, atIndex);
             string fileExtension = Path.GetExtension(file.FileName);
+
             string newImageName = Path.GetFileNameWithoutExtension(file.FileName);
-            newImageName = modifiedEmail + fileExtension; // Replace the image name with the employee name
+            newImageName = modifiedEmail + DateTime.Now.Ticks + fileExtension;
             string folderPath = Path.Combine(Directory.GetCurrentDirectory() + "\\Media\\UserProfiles\\");// Save the file to a specified folder
 
             // Get the file name
