@@ -480,7 +480,7 @@ namespace MRO_Api.Repositories
 
             string newImageName = Path.GetFileNameWithoutExtension(file.FileName);
  
-            newImageName = modifiedEmail + DateTime.Now.Ticks + fileExtension; // Replace the image name with the employee name
+            newImageName = modifiedEmail + DateTime.Now.Ticks + fileExtension; // Replace the   name with the employee name
 
             string folderPath = Path.Combine(Directory.GetCurrentDirectory() + "\\Media\\UserProfiles\\");// Save the file to a specified folder
 
