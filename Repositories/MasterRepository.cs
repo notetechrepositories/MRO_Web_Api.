@@ -218,7 +218,7 @@ namespace MRO_Api.Repositories
                 {
                     Data = null,
                     Message = errorDict?["Message"]?.ToString() ?? "An error occurred",
-                    Status =  500 // Internal Server Error
+                    Status = errorDict?["Status"],
                 };
             }
         }

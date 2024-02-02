@@ -4,7 +4,7 @@
     {       
             public T Data { get; set; }
             public object Message { get; set; }
-            public int Status { get; set; }
+            public dynamic Status { get; set; }
         
     }
 }
