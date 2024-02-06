@@ -43,7 +43,7 @@ namespace MRO_Api.Controllers
 
 
         [HttpDelete("delete")]
-        public async Task<IActionResult> commonDelete([FromBody] DeleteModel deleteModel)
+        public async Task<IActionResult>commonDelete([FromBody] DeleteModel deleteModel)
         {
             var result = await _masterRepository.commonDelete(deleteModel);
             return Ok(result);
@@ -58,6 +58,7 @@ namespace MRO_Api.Controllers
             var result = await _masterRepository.commonApiForEmail(createModel);
             return Ok(result);
         }
+
 
 
 
@@ -91,6 +92,14 @@ namespace MRO_Api.Controllers
         }
 
 
+
+        [HttpPost("get-with-image")]
+        public async Task<IActionResult> commonGetwithImage(CreateModel createModel)
+        {
+
+            var result = await _masterRepository.commonGetwithImage(createModel);
+            return Ok(result);
+        }
 
     }
 }

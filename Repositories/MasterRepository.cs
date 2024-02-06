@@ -187,10 +187,8 @@ namespace MRO_Api.Repositories
                                 {
                                     accumulatedPairs[propertyName] = propertyValue;
                                 }
-
                                 finalResult.Add(accumulatedPairs);
-                            }
-                            
+                            }                          
                         }
                         return new ApiResponseModel<dynamic>
                         {
@@ -282,8 +280,6 @@ namespace MRO_Api.Repositories
                 };
             }
         }
-
-
 
 
 
@@ -675,7 +671,94 @@ namespace MRO_Api.Repositories
         }
 
 
+        public async Task<ApiResponseModel<dynamic>> commonGetwithImage(CreateModel createModel)
+        {
+            try
+            {
+                dynamic finalResult = new List<Dictionary<string, object>>();
+                using (var connection = _context.CreateConnection())
+                {
+                    var jsonData = JsonConvert.SerializeObject(createModel);
 
+                    var result = await connection.QueryAsync(
+                        "api_crud_sp",
+                        new { jsonData },
+                        commandType: CommandType.StoredProcedure
+                    );
+
+                    var firstResult = result.FirstOrDefault() as IDictionary<string, object>;
+                    if (firstResult != null)
+                    {
+                        foreach (var kvp in firstResult)
+                        {
+                            var accumulatedPairs = new Dictionary<string, object>();
+                            var propertyName = kvp.Key;
+                            var propertyValue = kvp.Value;
+
+                            if (propertyName != "message" && propertyName != "status")
+                            {
+                                if (propertyValue is string stringValue)
+                                {
+                                    try
+                                    {
+                                        var jsonArray = JArray.Parse(stringValue);
+                                        string currentDirectory = Directory.GetCurrentDirectory();
+                                        foreach (JObject item in jsonArray)
+                                        {
+                                            if (item.TryGetValue("t15_file_path", out JToken value))
+                                            {
+                                                string updatedPath = Path.Combine(currentDirectory, value.ToString());
+                                                string modifiedPath = updatedPath.Replace("\\", "/");
+                                                item["t15_file_path"] = modifiedPath; // Update the path in the JSON object
+                                            }
+                                        }
+                                        accumulatedPairs[propertyName] = jsonArray.ToObject<List<Dictionary<string, object>>>();
+                                    }
+                                    catch (JsonException)
+                                    {
+                                        accumulatedPairs[propertyName] = stringValue;
+                                    }
+                                }
+                                else
+                                {
+                                    accumulatedPairs[propertyName] = propertyValue;
+                                }
+
+                                finalResult.Add(accumulatedPairs);
+                            }
+
+
+                        }
+                        return new ApiResponseModel<dynamic>
+                        {
+                            Data = finalResult,
+                            Message = firstResult["message"]?.ToString(),
+                            Status = Convert.ToInt32(firstResult["status"])
+                        };
+                    }
+                    else
+                    {
+                        return new ApiResponseModel<dynamic>
+                        {
+                            Data = null,
+                            Message = "No data returned",
+                            Status = 204
+                        };
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                var errorDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(ex.Message);
+
+                return new ApiResponseModel<dynamic>
+                {
+                    Data = null,
+                    Message = errorDict?["Message"]?.ToString() ?? "An error occurred",
+                    Status = 500
+                };
+            }
+        }
 
 
 

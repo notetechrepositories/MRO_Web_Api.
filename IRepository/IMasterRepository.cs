@@ -17,5 +17,8 @@ namespace MRO_Api.IRepository
         public Task<ApiResponseModel<dynamic>> InsertUser(string data, IFormFile formFile);
 
         public Task<ApiResponseModel<dynamic>> UpdateUser(string data, IFormFile? formFile);
+
+
+        public  Task<ApiResponseModel<dynamic>> commonGetwithImage(CreateModel createModel);
     }
 }
