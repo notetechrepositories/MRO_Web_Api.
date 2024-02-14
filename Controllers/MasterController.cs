@@ -31,11 +31,20 @@ namespace MRO_Api.Controllers
 
 
 
+
         [HttpPost("get")]
         public async Task<IActionResult> commonGet(CreateModel createModel)
         {
 
             var result = await _masterRepository.commonGet(createModel);
+            return Ok(result);
+        } 
+        
+        [HttpPost("test_time")]
+        public async Task<IActionResult> getCurrentTime()
+        {
+
+            var result = DateTime.Now.ToString();
             return Ok(result);
         }
 
