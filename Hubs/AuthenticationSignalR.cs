@@ -29,7 +29,8 @@ namespace MRO_Api.Hubs
 
         public async Task AlertNewLogin(string message, string connectionDict)
         {
-            await Clients.All.AlertNewLogin(message + Context.ConnectionId, connectionDict);
+/*            await Clients.Client(connectionDict).AlertNewLogin(message, connectionDict);
+*/            await Clients.All.AlertNewLogin(message, connectionDict);
         }
 
 
@@ -51,7 +52,8 @@ namespace MRO_Api.Hubs
 
                     if (result != null && result.connectionPhoneId != null)
                     {
-                        await Clients.All.AlertNewLogin("New User Added", "set");
+                       /* await Clients.Client(result.connectionPhoneId).AlertNewLogin(result.connectionPhoneId, result.connectionPhoneId);*/
+                        await Clients.All.AlertNewLogin(result.connectionPhoneId, result.connectionPhoneId);
                     }
 
                     return new ApiResponseModel<dynamic>
