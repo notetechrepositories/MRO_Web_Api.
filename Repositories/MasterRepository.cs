@@ -1,7 +1,10 @@
 ﻿using Dapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.IdentityModel.Tokens;
 using MRO_Api.Context;
+using MRO_Api.Hubs;
 using MRO_Api.IRepository;
 using MRO_Api.Libraries.Decrypt;
 using MRO_Api.Libraries.Encrypt;
@@ -15,6 +18,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net.WebSockets;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json.Nodes;
 using static MRO_Api.Model.CommonModel;
@@ -28,12 +32,15 @@ namespace MRO_Api.Repositories
         private readonly DapperContext _context;
      
         private readonly CommunicationUtilities _communicationUtilities;
-       
-        public MasterRepository(DapperContext context, CommunicationUtilities communicationUtilities)
+        private readonly IConfiguration _iconfiguration;
+
+
+        public MasterRepository(DapperContext context, CommunicationUtilities communicationUtilities, IConfiguration iconfiguration)
 
         {
-            _context = context;          
+            _context = context;
             _communicationUtilities = communicationUtilities;
+            _iconfiguration = iconfiguration;
         }
 
 
@@ -139,6 +146,46 @@ namespace MRO_Api.Repositories
                    var t15FilePathValue = menuDict["t15_file_path"];
                }
            }*/
+
+
+
+
+
+        public object GetToken(dynamic userObj)
+        {
+            var claims = new[]
+            {
+                        new Claim(JwtRegisteredClaimNames.Sub,_iconfiguration["Jwt:Subject"]),
+                        new Claim(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString()),
+                        new Claim(JwtRegisteredClaimNames.Iat,DateTime.UtcNow.ToString()),
+                        new Claim("UserId",userObj.id_t5_m_users.ToString()),
+                         new Claim("first_name",userObj.t5_first_name),
+                        new Claim("last_name",userObj.t5_last_name),
+                        new Claim("Email",userObj.t5_email)
+
+            };
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_iconfiguration["Jwt:Key"]));
+
+            var signIn = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+                _iconfiguration["Jwt:Issuer"],
+                _iconfiguration["Jwt:Audience"],
+                claims,
+                expires: DateTime.UtcNow.AddMinutes(40),
+                signingCredentials: signIn
+                );
+
+
+            var accessTokenDictionary = new Dictionary<string, string>()
+            {
+                {"access_token",new JwtSecurityTokenHandler().WriteToken(token) }
+            };
+            return accessTokenDictionary;
+        }
+
+
 
 
 
@@ -283,6 +330,9 @@ namespace MRO_Api.Repositories
 
 
 
+
+
+
         public async Task<ApiResponseModel<dynamic>> commonDelete(DeleteModel deleteModel)
         {
             try
@@ -297,14 +347,14 @@ namespace MRO_Api.Repositories
                         new { jsonData },
                         commandType: CommandType.StoredProcedure
                     );
-
                     var firstResult = result.FirstOrDefault();
                     if (firstResult != null)
                     {
-
                         var testData = firstResult.data;
                         var message = firstResult.message;
                         var status = firstResult.status;
+
+                       
 
                         return new ApiResponseModel<dynamic>
                         {
@@ -315,10 +365,8 @@ namespace MRO_Api.Repositories
                     }
                     else
                     {
-
                         return new ApiResponseModel<dynamic>
                         {
-
                             Data = null,
                             Message = "No data returned",
                             Status = 204 // No Content
@@ -341,7 +389,60 @@ namespace MRO_Api.Repositories
         }
 
 
+        public async Task<ApiResponseModel<dynamic>>Terminate(DeleteModel deleteModel)
+        {
+            try
+            {
+                dynamic finalResult = new List<Dictionary<string, object>>();
+                using (var connection = _context.CreateConnection())
+                {
+                    var jsonData = JsonConvert.SerializeObject(deleteModel);
 
+                    var result = await connection.QueryAsync(
+                        "api_crud_sp",
+                        new { jsonData },
+                        commandType: CommandType.StoredProcedure
+                    );
+                    var firstResult = result.FirstOrDefault();
+                    if (firstResult != null)
+                    {
+                        var testData = firstResult.data;
+                        var message = firstResult.message;
+                        var status = firstResult.status;
+
+
+
+                        return new ApiResponseModel<dynamic>
+                        {
+                            Data = finalResult,
+                            Message = message,
+                            Status = Convert.ToInt32(status)
+                        };
+                    }
+                    else
+                    {
+                        return new ApiResponseModel<dynamic>
+                        {
+                            Data = null,
+                            Message = "No data returned",
+                            Status = 204 // No Content
+                        };
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+
+                var errorDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(ex.Message);
+
+                return new ApiResponseModel<dynamic>
+                {
+                    Data = null,
+                    Message = errorDict["Message"],
+                    Status = Convert.ToInt32(errorDict["Status"])
+                };
+            }
+        }
 
 
 

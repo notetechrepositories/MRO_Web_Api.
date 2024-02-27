@@ -20,5 +20,7 @@ namespace MRO_Api.IRepository
 
 
         public  Task<ApiResponseModel<dynamic>> commonGetwithImage(CreateModel createModel);
+
+        public object GetToken(dynamic userObj);
     }
 }

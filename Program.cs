@@ -7,10 +7,21 @@ using Newtonsoft.Json.Linq;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using MRO_Api.Utilities;
+using MRO_Api.Hubs;
+using Microsoft.AspNetCore.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 // Add services to the container.
+builder.Services.AddSignalR();
+builder.Services.AddCors(options => {
+    options.AddPolicy("CORSPolicy", builder => builder.AllowAnyMethod().AllowAnyHeader().AllowCredentials().SetIsOriginAllowed((hosts) => true));
+});
+
+
+
+
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -23,6 +34,9 @@ builder.Services.AddSingleton<CommunicationUtilities>();
 
 builder.Services.AddScoped<IMasterRepository, MasterRepository>();
 builder.Services.AddScoped<ILoginRepository, LoginRepository>();
+builder.Services.AddScoped<IAuthenticationRepository, AuthenticationRepository>();
+
+
 
 
 
@@ -91,20 +105,24 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 
-app.UseHttpsRedirection();
-
-app.UseAuthorization();
-
-
-
-app.UseCors(builder => builder
+/*app.UseCors(builder => builder
     .AllowAnyOrigin()
     .AllowAnyHeader()
     .AllowAnyMethod() 
 );
+*/
 
 
+app.UseAuthorization();
+app.UseCors("CORSPolicy");
+app.UseRouting();
+app.UseAuthorization();
+app.UseEndpoints(endpoints => {
+    endpoints.MapControllers();
+    endpoints.MapHub<AuthenticationSignalR>("/MRO_SignalR_Hub");
+});
 
+app.UseHttpsRedirection();
 app.MapControllers();
-
 app.Run();
+
