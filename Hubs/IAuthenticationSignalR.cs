@@ -8,7 +8,10 @@ namespace MRO_Api.Hubs
     {
  
         Task GetLoggedConnectionDetails(IEnumerable<dynamic> connectionDetails);
+        Task AlertNewLogin( dynamic connectionDict);
+        Task AlertTerminateSession(List<string>connectionList,string message);
+        Task SentLoggedUserDetails(ApiResponseModel<dynamic> data);
 
-        Task AlertNewLogin(string message, string connectionDict);
+        Task AlertLogout(dynamic connectionDict);
     }
 }

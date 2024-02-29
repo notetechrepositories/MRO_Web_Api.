@@ -10,6 +10,7 @@ using MRO_Api.Libraries.Decrypt;
 using MRO_Api.Libraries.Encrypt;
 using MRO_Api.Model;
 using MRO_Api.Utilities;
+using MySqlX.XDevAPI;
 using MySqlX.XDevAPI.Common;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -33,14 +34,16 @@ namespace MRO_Api.Repositories
      
         private readonly CommunicationUtilities _communicationUtilities;
         private readonly IConfiguration _iconfiguration;
+        private IHubContext<AuthenticationSignalR, IAuthenticationSignalR> _signalHub;
 
 
-        public MasterRepository(DapperContext context, CommunicationUtilities communicationUtilities, IConfiguration iconfiguration)
+        public MasterRepository(DapperContext context, CommunicationUtilities communicationUtilities, IConfiguration iconfiguration, IHubContext<AuthenticationSignalR, IAuthenticationSignalR> signalHub)
 
         {
             _context = context;
             _communicationUtilities = communicationUtilities;
             _iconfiguration = iconfiguration;
+            _signalHub = signalHub;
         }
 
 
@@ -151,6 +154,44 @@ namespace MRO_Api.Repositories
 
 
 
+
+        public async Task<ApiResponseModel<dynamic>> TerminateSession(List<string> jsonData)
+        {
+            try
+            {
+                using (var connection = _context.CreateConnection())
+                {
+
+                    var result = await connection.QueryFirstOrDefaultAsync<dynamic>(
+                       "mro_dev_login_and_rights.web_terminate_by_app_sp",
+                       new { jsonData = JsonConvert.SerializeObject(jsonData) },
+                       commandType: CommandType.StoredProcedure
+                   );
+                    // Deserialize the deviceList property from a string to a list of dictionaries
+                    if (result != null && result.connectionList is string deviceListString )
+                    {
+                        result.connectionList = JsonConvert.DeserializeObject<List<string>>(result.connectionList);
+                        _signalHub.Clients.Clients(result.connectionList).AlertTerminateSession(result.connectionList,"User Terminate your session");
+                    }
+                    return new ApiResponseModel<dynamic>()
+                    {
+                        Data = result.connectionList,
+                        Message = "Successfully Terminated",
+                        Status = 200
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
+        }
+
+
+
+
+
+
         public object GetToken(dynamic userObj)
         {
             var claims = new[]
@@ -187,6 +228,62 @@ namespace MRO_Api.Repositories
 
 
 
+        public async Task<ApiResponseModel<dynamic>> LogoutSignalR(CreateModel createModel)
+        {
+            try
+            {
+
+                using (var connection = _context.CreateConnection())
+                {
+                    var jsonData = JsonConvert.SerializeObject(createModel);
+
+
+                    var result = await connection.QueryFirstOrDefaultAsync<dynamic>(
+                        "api_crud_sp",
+                        new { jsonData },
+                        commandType: CommandType.StoredProcedure
+                    );
+
+
+                    // Deserialize the deviceList property from a string to a list of dictionaries
+                    if (result != null)
+                    {
+                        if (result.deviceList is string deviceListString && result.connectionPhoneId != null)
+                        {
+                            result.deviceList = JsonConvert.DeserializeObject<List<Dictionary<string, string>>>(result.deviceList);
+                           
+                        }
+                        return new ApiResponseModel<dynamic>
+                        {
+                            Data = result,
+                            Message = result.message,
+                            Status = Convert.ToInt32(result.status)
+                        };
+                    }
+
+                    else
+                    {
+                        return new ApiResponseModel<dynamic>
+                        {
+                            Data = null,
+                            Message = "No data returned",
+                            Status = 204 // No Content
+                        };
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                var errorDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(ex.Message);
+
+                return new ApiResponseModel<dynamic>
+                {
+                    Data = null,
+                    Message = errorDict?["Message"]?.ToString() ?? "An error occurred",
+                    Status = errorDict?["Status"],
+                };
+            }
+        }
 
 
 
@@ -194,7 +291,7 @@ namespace MRO_Api.Repositories
         {
             try
             {
-                dynamic finalResult = new List<Dictionary<string, object>>();
+                 dynamic finalResult = new List<Dictionary<string, object>>();
                 using (var connection = _context.CreateConnection())
                 {
                     var jsonData = JsonConvert.SerializeObject(createModel);
@@ -205,7 +302,7 @@ namespace MRO_Api.Repositories
                         commandType: CommandType.StoredProcedure
                     );
 
-                    var firstResult = result.FirstOrDefault() as IDictionary<string, object>;
+                    var firstResult = result.FirstOrDefault() as Dictionary<string, object>;
                     if (firstResult != null)
                     {
                         foreach (var kvp in firstResult)
@@ -248,7 +345,7 @@ namespace MRO_Api.Repositories
                     {
                         return new ApiResponseModel<dynamic>
                         {
-                            Data = null,
+                            Data = result,
                             Message = "No data returned",
                             Status = 204 // No Content
                         };

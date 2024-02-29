@@ -27,11 +27,27 @@ namespace MRO_Api.Hubs
        
 
 
-        public async Task AlertNewLogin(string message, string connectionDict)
+        public async Task AlertNewLogin( dynamic connectionDict)
         {
-/*            await Clients.Client(connectionDict).AlertNewLogin(message, connectionDict);
-*/            await Clients.All.AlertNewLogin(message, connectionDict);
+            await Clients.Client(connectionDict).AlertNewLogin( connectionDict);
+/*            await Clients.All.AlertNewLogin(message, connectionDict);
+*/      }    
+        public async Task AlertLogout( dynamic connectionDict)
+        {
+            await Clients.Client(connectionDict).AlertLogout( connectionDict);
+/*            await Clients.All.AlertNewLogin(message, connectionDict);
+*/      }
+        
+
+        public async Task AlertTerminateSession(List<string> connectionDict,string message)
+        {
+            await Clients.Clients(connectionDict).AlertTerminateSession(connectionDict,message);
+            /*            await Clients.All.AlertNewLogin(message, connectionDict);
+            */
         }
+
+
+
 
 
 
@@ -42,6 +58,7 @@ namespace MRO_Api.Hubs
                 using (var connection = _dapperContext.CreateConnection())
                 {
                     jsonData["connectionId"] = Context.ConnectionId;
+
                     var serializedJsonData = JsonConvert.SerializeObject(jsonData);
 
                     var result = await connection.QueryFirstOrDefaultAsync<dynamic>(
@@ -49,13 +66,17 @@ namespace MRO_Api.Hubs
                         new { jsonData = serializedJsonData },
                         commandType: CommandType.StoredProcedure
                     );
+                  
 
-                    if (result != null && result.connectionPhoneId != null)
+                    // Deserialize the deviceList property from a string to a list of dictionaries
+                    if (result != null && result.deviceList is string deviceListString && result.connectionPhoneId != null)
                     {
-                       /* await Clients.Client(result.connectionPhoneId).AlertNewLogin(result.connectionPhoneId, result.connectionPhoneId);*/
-                        await Clients.All.AlertNewLogin(result.connectionPhoneId, result.connectionPhoneId);
+                        result.deviceList = JsonConvert.DeserializeObject<List<Dictionary<string, string>>>(result.deviceList);
+                        await Clients.Client(result.connectionPhoneId).AlertNewLogin(result.deviceList);
                     }
-
+                   
+                        
+                       
                     return new ApiResponseModel<dynamic>
                     {
                         Data = result != null ? _masterRepository.GetToken(result) : null,
@@ -81,8 +102,75 @@ namespace MRO_Api.Hubs
 
 
 
+        public async Task<ApiResponseModel<dynamic>> LogoutSignalR(CreateModel createModel)
+        {
+            try
+            {
+                using (var connection = _dapperContext.CreateConnection())
+                {
+                    var jsonData = JsonConvert.SerializeObject(createModel);
+
+                    var result = await connection.QueryFirstOrDefaultAsync<dynamic>(
+                        "api_crud_sp",
+                        new { jsonData },
+                        commandType: CommandType.StoredProcedure
+                    );
+
+                    // Deserialize the deviceList property from a string to a list of dictionaries
+                    if (result != null)
+                    {
+
+                        if ( result.connectionPhoneId != null)
+                        {
+                            result.deviceList = JsonConvert.DeserializeObject<List<Dictionary<string, string>>>(result.deviceList);
+                        
+                            await Clients.Client(result.connectionPhoneId).AlertLogout(result.deviceList);
+                        }
+
+                        return new ApiResponseModel<dynamic>
+                        {
+                            Data = result.data,
+                            Message = result.message,
+                            Status = Convert.ToInt32(result.status)
+                        };
+                    }
+                    else
+                    {
+                        return new ApiResponseModel<dynamic>
+                        {
+                            Data = null,
+                            Message = "No data returned",
+                            Status = 204 // No Content
+                        };
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                var errorDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(ex.Message);
+
+                return new ApiResponseModel<dynamic>
+                {
+                    Data = null,
+                    Message = errorDict?["Message"]?.ToString() ?? "An error occurred",
+                    Status = Convert.ToInt32(errorDict?["Status"] ?? 500),  // Provide a default status code if not available
+                };
+            }
+        }
+
+
+
+
+
         public string GenerateConnectionIdForQR() => Context.ConnectionId;
 
+
+
+
+        public async Task SentLoggedUserDetails(ApiResponseModel<dynamic> data, string connectionId)
+        {
+            await Clients.Client(connectionId).SentLoggedUserDetails(data);
+        }
 
 
 
@@ -98,9 +186,18 @@ namespace MRO_Api.Hubs
                     commandType: CommandType.StoredProcedure
                 );
 
-                if (result.connectionPhoneId != null)
+                if (result != null)
                 {
-                    await Clients.Client(result.connectionPhoneId).AlterNewLogin("New User Added", result.connectionPhoneId);
+                    await Clients.Client(createModel.data["connectionId"]).SentLoggedUserDetails(
+                        new ApiResponseModel<dynamic>()
+                        {
+                            Data= _masterRepository.GetToken(result),
+                            Message = "User logged  succesfully",
+                            Status = 200
+                        }
+                        );
+                    /* await Clients.Client(result.connectionPhoneId).AlertNewLogin(result.connectionPhoneId, result.connectionPhoneId);*/
+                    await Clients.All.AlertNewLogin(result.deviceList);
                 }
 
                 return new ApiResponseModel<dynamic>

@@ -32,8 +32,6 @@ namespace MRO_Api.Repositories
             {
                 using (var connection = _context.CreateConnection())
                 {
-                    /*Serialize the request object to JSON*/
-                   /* jsonData["t18_connection_id"] = "1234";*/
                     var Serialize_jsonData = JsonConvert.SerializeObject(jsonData);
 
                     var result = await connection.QueryFirstOrDefaultAsync<dynamic>(
@@ -42,9 +40,15 @@ namespace MRO_Api.Repositories
                          commandType: CommandType.StoredProcedure
                      );
 
+                    // Deserialize the deviceList property from a string to a list of dictionaries
+                    if (result != null && result.deviceList is string deviceListString)
+                    {
+                        result.deviceList = JsonConvert.DeserializeObject<List<Dictionary<string, string>>>(result.deviceList);
+                    }
+
                     return new ApiResponseModel<dynamic>
                     {
-                        Data = GetToken(result),
+                        Data = result,
                         Message = "Successfully login ",
                         Status = 200
                     };
@@ -58,7 +62,6 @@ namespace MRO_Api.Repositories
                     Message = ex.Message,
                     Status = 400
                 };
-
             }
         }
 

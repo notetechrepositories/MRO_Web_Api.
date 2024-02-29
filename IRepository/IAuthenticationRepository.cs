@@ -4,6 +4,8 @@ namespace MRO_Api.IRepository
 {
     public interface IAuthenticationRepository
     {
-     
+
+        public Task<ApiResponseModel<dynamic>> Login(Dictionary<string, string> datajsonData);
+
     }
 }

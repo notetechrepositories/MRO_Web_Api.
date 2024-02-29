@@ -22,5 +22,8 @@ namespace MRO_Api.IRepository
         public  Task<ApiResponseModel<dynamic>> commonGetwithImage(CreateModel createModel);
 
         public object GetToken(dynamic userObj);
+        public  Task<ApiResponseModel<dynamic>> TerminateSession(List<string> connectionList);
+
+        public  Task<ApiResponseModel<dynamic>> LogoutSignalR(CreateModel createModel);
     }
 }
