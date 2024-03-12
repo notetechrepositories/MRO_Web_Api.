@@ -10,10 +10,17 @@ namespace MRO_Api.Controllers
     public class LoginController : ControllerBase
     {
         private readonly ILoginRepository _loginRepository;
+
+
+
         public LoginController(ILoginRepository loginRepository)
         {
             _loginRepository = loginRepository;
         }
+
+
+
+
 
         [HttpPost("login")]
         public async Task<IActionResult>ValidatePin(Dictionary<string,string> jsonData)
@@ -21,5 +28,8 @@ namespace MRO_Api.Controllers
             var result = await _loginRepository.ValidatePin(jsonData);
             return Ok(result);
         }
+
+
+
     }
 }

@@ -4,6 +4,7 @@ using MRO_Api.Context;
 using MRO_Api.IRepository;
 using MRO_Api.Model;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -32,7 +33,10 @@ namespace MRO_Api.Repositories
             {
                 using (var connection = _context.CreateConnection())
                 {
+                    jsonData["connectionId"] = "afdsfa";
                     var Serialize_jsonData = JsonConvert.SerializeObject(jsonData);
+
+                 
 
                     var result = await connection.QueryFirstOrDefaultAsync<dynamic>(
                          "get_validation_pin_sp",
@@ -40,15 +44,21 @@ namespace MRO_Api.Repositories
                          commandType: CommandType.StoredProcedure
                      );
 
-                    // Deserialize the deviceList property from a string to a list of dictionaries
-                    if (result != null && result.deviceList is string deviceListString)
-                    {
-                        result.deviceList = JsonConvert.DeserializeObject<List<Dictionary<string, string>>>(result.deviceList);
-                    }
 
+                    // Deserialize the deviceList prvoperty from a string to a list of dictionaries
+                    if (result != null && result.roleList is string roleListString)
+                    {
+                        result.roleList = JsonConvert.DeserializeObject<List<string>>(result.roleList);
+                    }
+                    var accessTokenDictionary = new Dictionary<string, dynamic>()
+                    {
+                        {"access_token",GetToken(result) },
+                        {"roleList",result.roleList }
+                    };
+                    
                     return new ApiResponseModel<dynamic>
                     {
-                        Data = result,
+                        Data = accessTokenDictionary,
                         Message = "Successfully login ",
                         Status = 200
                     };
@@ -98,11 +108,14 @@ namespace MRO_Api.Repositories
                 );
 
             
-            var accessTokenDictionary = new Dictionary<string, string>()
-            {
-                {"access_token",new JwtSecurityTokenHandler().WriteToken(token) }
-            };
-            return accessTokenDictionary ;
+             /* var accessTokenDictionary = new Dictionary<string, string>()
+                {
+                    {"access_token",new JwtSecurityTokenHandler().WriteToken(token) }
+                };*/
+
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+
         }
 
 

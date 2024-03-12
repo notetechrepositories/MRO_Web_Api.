@@ -235,8 +235,8 @@ namespace MRO_Api.Repositories
 
                 using (var connection = _context.CreateConnection())
                 {
-                    var jsonData = JsonConvert.SerializeObject(createModel);
 
+                    var jsonData = JsonConvert.SerializeObject(createModel);
 
                     var result = await connection.QueryFirstOrDefaultAsync<dynamic>(
                         "api_crud_sp",
@@ -287,11 +287,15 @@ namespace MRO_Api.Repositories
 
 
 
+
+
+
+
         public async Task<ApiResponseModel<dynamic>> commonGet(CreateModel createModel)
         {
             try
             {
-                 dynamic finalResult = new List<Dictionary<string, object>>();
+                dynamic finalResult = new List<Dictionary<string, object>>();
                 using (var connection = _context.CreateConnection())
                 {
                     var jsonData = JsonConvert.SerializeObject(createModel);
@@ -302,7 +306,7 @@ namespace MRO_Api.Repositories
                         commandType: CommandType.StoredProcedure
                     );
 
-                    var firstResult = result.FirstOrDefault() as Dictionary<string, object>;
+                    var firstResult = result.FirstOrDefault() as IDictionary<string, object>;
                     if (firstResult != null)
                     {
                         foreach (var kvp in firstResult)
@@ -331,8 +335,10 @@ namespace MRO_Api.Repositories
                                 {
                                     accumulatedPairs[propertyName] = propertyValue;
                                 }
+
                                 finalResult.Add(accumulatedPairs);
-                            }                          
+                            }
+
                         }
                         return new ApiResponseModel<dynamic>
                         {
@@ -345,7 +351,7 @@ namespace MRO_Api.Repositories
                     {
                         return new ApiResponseModel<dynamic>
                         {
-                            Data = result,
+                            Data = null,
                             Message = "No data returned",
                             Status = 204 // No Content
                         };
@@ -360,10 +366,13 @@ namespace MRO_Api.Repositories
                 {
                     Data = null,
                     Message = errorDict?["Message"]?.ToString() ?? "An error occurred",
-                    Status = errorDict?["Status"],
+                    Status = 500 // Internal Server Error
                 };
             }
         }
+
+
+
 
 
 
@@ -875,16 +884,20 @@ namespace MRO_Api.Repositories
             {
                 dynamic finalResult = new List<Dictionary<string, object>>();
                 using (var connection = _context.CreateConnection())
-                {
+                { 
+
                     var jsonData = JsonConvert.SerializeObject(createModel);
+
 
                     var result = await connection.QueryAsync(
                         "api_crud_sp",
                         new { jsonData },
                         commandType: CommandType.StoredProcedure
+
                     );
 
                     var firstResult = result.FirstOrDefault() as IDictionary<string, object>;
+
                     if (firstResult != null)
                     {
                         foreach (var kvp in firstResult)
@@ -924,8 +937,6 @@ namespace MRO_Api.Repositories
 
                                 finalResult.Add(accumulatedPairs);
                             }
-
-
                         }
                         return new ApiResponseModel<dynamic>
                         {

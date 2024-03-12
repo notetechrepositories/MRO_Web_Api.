@@ -108,10 +108,13 @@ namespace MRO_Api.Controllers
         [HttpPost("get-with-image")]
         public async Task<IActionResult> commonGetwithImage(CreateModel createModel)
         {
-
             var result = await _masterRepository.commonGetwithImage(createModel);
             return Ok(result);
         }
+
+         
+      
+
 
     }
 }
