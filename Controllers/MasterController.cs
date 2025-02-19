@@ -85,9 +85,9 @@ namespace MRO_Api.Controllers
 
 
         [HttpPost("Insert-user")]
-        public async Task<IActionResult> InsertUser(string data, [FromForm] IFormFile? formFile)
+        public async Task<IActionResult> InsertUser([FromForm] InsertUserModel insertUserModel )
         {
-            var result = await _masterRepository.InsertUser(data, formFile);
+            var result = await _masterRepository.InsertUser(insertUserModel.data, insertUserModel.formFile);
             return Ok(result);
 
         }

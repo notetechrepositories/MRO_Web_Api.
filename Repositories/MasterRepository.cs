@@ -584,15 +584,15 @@ namespace MRO_Api.Repositories
                     if (firstResult != null)
                     {
                         var serializeData = JsonConvert.SerializeObject(firstResult);
-                        var deserializerData = JsonConvert.DeserializeObject<Dictionary<string, string>>(serializeData);
+                        var deserializerData = JsonConvert.DeserializeObject<IDictionary<string, Object>>(serializeData);
 
                         var email = await _communicationUtilities.SendMail(deserializerData);
 
                         return new ApiResponseModel<dynamic>
                         {
-                            Data = finalResult,
-                            Message = firstResult["message"]?.ToString(),
-                            Status = Convert.ToInt32(firstResult["status"])
+                            Data = deserializerData,
+                            Message = deserializerData["message"]?.ToString(),
+                            Status = Convert.ToInt32(deserializerData["status"])
                         };
                     }
                     else
